@@ -1,0 +1,60 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+void contaminacao(int l, int c, char v[], int i, int j)
+{
+if (i < 0 || i >= l || j < 0 || j >= c || v[i * c + j] != 'A')
+{
+return;
+}
+
+v[i * c + j] = 'T';
+
+contaminacao(l, c, v, i, j + 1);
+contaminacao(l, c, v, i, j - 1);
+contaminacao(l, c, v, i + 1, j);
+contaminacao(l, c, v, i - 1, j);
+}
+
+int main()
+{
+int l, c;
+
+scanf("%d %d", &l, &c);
+
+char *M = malloc(l * c * sizeof(char));
+
+for (int i = 0; i < l; i++)
+{
+    for (int j = 0; j < c; j++)
+    {
+        scanf(" %c", &M[i * c + j]);
+    }
+}
+
+for (int i = 0; i < l; i++)
+{
+    for (int j = 0; j < c; j++)
+    {
+        if (M[i * c + j] == 'T')
+        {
+            M[i * c + j] = 'A';
+            contaminacao(l, c, M, i, j);
+        }
+    }
+}
+
+for (int i = 0; i < l; i++)
+{
+    for (int j = 0; j < c; j++)
+    {
+        printf("%c", M[i * c + j]);
+    }
+
+    printf("\n");
+}
+
+free(M);
+
+return 0;
+}
