@@ -1,0 +1,390 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct
+{
+    char marca[51];
+    unsigned int reg;
+    float amargor;
+} Bier;
+
+
+void sehen(Bier *v, int pos)
+{
+    printf("Marca: %s\n", v[pos].marca);
+    printf("Registro: %u\n", v[pos].reg);
+    printf("Amargor: %.2f%%\n", v[pos].amargor);
+}
+
+
+
+void entitylesen(Bier *v)
+{
+    printf("Digite a marca: ");
+    scanf(" %50[^\n]", v->marca);
+
+    printf("Digite o registro: ");
+    scanf("%u", &v->reg);
+
+    printf("Digite o percentual de amargor: ");
+    scanf("%f", &v->amargor);
+}
+
+
+
+void Deaktivieren(Bier *v, int pos)
+{
+    strcpy(v[pos].marca, "n/d");
+    v[pos].reg = 0;
+    v[pos].amargor = 0;
+}
+
+
+void Insertionsort(Bier *v, int n)
+{
+    int i, j;
+    Bier chave;
+
+    for (i = 1; i < n; i++)
+    {
+        chave = v[i];
+        j = i - 1;
+
+        while (j >= 0 && v[j].reg > chave.reg)
+        {
+            v[j + 1] = v[j];
+            j--;
+        }
+
+        v[j + 1] = chave;
+    }
+}
+
+
+
+int Binaersuchen(Bier *v, int anfang, int ende,
+                 unsigned int reg)
+{
+    if (anfang > ende)
+    {
+        return -1;
+    }
+
+    int mitte = (anfang + ende) / 2;
+
+    if (v[mitte].reg == reg)
+    {
+        return mitte;
+    }
+
+    if (reg < v[mitte].reg)
+    {
+        return Binaersuchen(v, anfang, mitte - 1, reg);
+    }
+
+    return Binaersuchen(v, mitte + 1, ende, reg);
+}
+
+
+void Einfuegen(Bier **v, int *n, int *kapazitat)
+{
+    if (*n == *kapazitat)
+    {
+        int neuekapazitat = (*kapazitat) * 2;
+
+        Bier *aux = realloc(*v,
+                            neuekapazitat * sizeof(Bier));
+
+        if (aux == NULL)
+        {
+            printf("\nErro ao alocar memoria!\n");
+            return;
+        }
+
+        *v = aux;
+        *kapazitat = neuekapazitat;
+
+        printf("\nMemoria expandida!\n");
+    }
+
+    printf("\n--- Novo cadastro ---\n");
+
+    Bier novo;
+    entitylesen(&novo);
+
+    if (novo.reg == 0)
+    {
+        printf("\nRegistro zero nao permitido!\n");
+        return;
+    }
+
+    if (Binaersuchen(*v, 0, *n - 1, novo.reg) != -1)
+    {
+        printf("\nRegistro ja cadastrado!\n");
+        return;
+    }
+
+    *v[*n] = novo;
+    (*n)++;
+
+    Insertionsort(*v, *n);
+
+    printf("\nCerveja cadastrada com sucesso!\n");
+}
+
+
+
+void SuchenMenu(Bier *v, int n)
+{
+    unsigned int reg;
+
+    printf("\nDigite o registro que deseja buscar: ");
+    scanf("%u", &reg);
+
+    int pos = Binaersuchen(v, 0, n - 1, reg);
+
+    if (pos != -1 && reg != 0)
+    {
+        printf("\nCerveja encontrada!\n\n");
+        sehen(v, pos);
+    }
+    else
+    {
+        printf("\nRegistro nao encontrado!\n");
+    }
+}
+
+
+
+void Aendern(Bier *v, int n)
+{
+    unsigned int reg;
+
+    printf("\nDigite o registro que deseja alterar: ");
+    scanf("%u", &reg);
+
+    int pos = Binaersuchen(v, 0, n - 1, reg);
+
+    if (pos != -1 && reg != 0)
+    {
+        Bier novo;
+
+        printf("\nDigite os novos dados:\n");
+        entitylesen(&novo);
+
+        if (novo.reg == 0)
+        {
+            printf("\nRegistro zero nao permitido!\n");
+            return;
+        }
+
+        int repetido = Binaersuchen(v, 0, n - 1, novo.reg);
+
+        if (repetido != -1 && repetido != pos)
+        {
+            printf("\nRegistro ja cadastrado!\n");
+            return;
+        }
+
+        v[pos] = novo;
+
+        Insertionsort(v, n);
+
+        printf("\nDados alterados com sucesso!\n");
+    }
+    else
+    {
+        printf("\nRegistro nao encontrado!\n");
+    }
+}
+
+
+void Loeschen(Bier *v, int n)
+{
+    unsigned int reg;
+
+    printf("\nDigite o registro que deseja excluir: ");
+    scanf("%u", &reg);
+
+    int pos = Binaersuchen(v, 0, n - 1, reg);
+
+    if (pos != -1 && reg != 0)
+    {
+        Deaktivieren(v, pos);
+
+        printf("\nRegistro excluido com sucesso!\n");
+    }
+    else
+    {
+        printf("\nRegistro nao encontrado!\n");
+    }
+}
+
+
+void Dlist(Bier *v, int n)
+{
+    int encontrou = 0;
+
+    printf("\n--- Lixeira ---\n");
+
+    for (int i = 0; i < n; i++)
+    {
+        if (v[i].reg == 0)
+        {
+            printf("\nPosicao desativada: %d\n", i);
+            sehen(v, i);
+            encontrou = 1;
+        }
+    }
+
+    if (!encontrou)
+    {
+        printf("\nA lixeira esta vazia!\n");
+    }
+}
+
+
+void Papierkorb(Bier *v, int *n)
+{
+    int j = 0;
+    int removidos = 0;
+
+    for (int i = 0; i < *n; i++)
+    {
+        if (v[i].reg != 0)
+        {
+            v[j] = v[i];
+            j++;
+        }
+        else
+        {
+            removidos++;
+        }
+    }
+
+    *n = j;
+
+    Insertionsort(v, *n);
+
+    printf("\n--- Limpeza da lixeira ---\n");
+    printf("Registros removidos: %d\n", removidos);
+    printf("Registros restantes: %d\n", *n);
+}
+
+
+void List(Bier *v, int n)
+{
+    int encontrou = 0;
+
+    printf("\n--- Lista de cervejas ---\n");
+
+    for (int i = 0; i < n; i++)
+    {
+        if (v[i].reg != 0)
+        {
+            printf("\nPosicao: %d\n", i);
+            sehen(v, i);
+            encontrou = 1;
+        }
+    }
+
+    if (!encontrou)
+    {
+        printf("\nNenhuma cerveja cadastrada!\n");
+    }
+}
+
+
+void Hauptmenu()
+{
+    printf("     Bem vindo E.H       \n\n");
+
+    printf("  .-~~~~~~~~~~~~-.\n");
+    printf(" /  ~~~~~~~~~~~~  \\__\n");
+    printf("|  ~~~~~~~~~~~~~~  | )\n");
+    printf("|  . * . * . * .   | )\n");
+    printf("|  * . * . * . *   | )\n");
+    printf("|  . * . * . * .   | )\n");
+    printf("|  * . * . * . *   | )\n");
+    printf("|__________________| )\n");
+    printf(" \\______prost!_____/\n");
+
+    printf("\nDigite uma opcao:\n\n");
+
+    printf("1 - Inserir Dados\n");
+    printf("2 - Buscar Dados\n");
+    printf("3 - Alterar Dados\n");
+    printf("4 - Exclusao de Dados\n");
+    printf("5 - Lixeira\n");
+    printf("6 - Listar\n");
+    printf("0 - Sair\n");
+}
+
+
+int main()
+{
+    int op;
+    int n = 0;
+    int capacidade = 2;
+
+    Bier *v = malloc(capacidade * sizeof(Bier));
+
+    if (v == NULL)
+    {
+        printf("Erro ao alocar memoria!\n");
+        return 1;
+    }
+
+    do
+    {
+        Hauptmenu();
+
+        printf("\nOpcao: ");
+        scanf("%d", &op);
+
+        switch (op)
+        {
+            case 1:
+                Einfuegen(&v, &n, &capacidade);
+                break;
+
+            case 2:
+                SuchenMenu(v, n);
+                break;
+
+            case 3:
+                Aendern(v, n);
+                break;
+
+            case 4:
+                Loeschen(v, n);
+                break;
+
+            case 5:
+                Dlist(v, n);
+                Papierkorb(v, &n);
+                break;
+
+            case 6:
+                List(v, n);
+                break;
+
+            case 0:
+                printf("\nEncerrando o programa. Prost!\n");
+                break;
+
+            default:
+                printf("\nOpcao invalida!\n");
+                break;
+        }
+
+        printf("\n");
+
+    } while (op != 0);
+
+    free(v);
+
+    return 0;
+}
